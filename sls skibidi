@@ -1,0 +1,531 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Doglix sls premium hub",
+   LoadingTitle = "Enjoyy",
+   LoadingSubtitle = "by Doglix",
+   Theme = "Default", -- DarkBlue, Green, Light, Default - more coming soon!
+
+   DisableRayfieldPrompts = false,
+
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Big Hub"
+   },
+
+   Discord = {
+      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
+      RememberJoins = false -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = true, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Skividi key",
+      Subtitle = "Key System",
+      Note = "U gotta dm me", -- Use this to tell the user how to get a key
+      FileName = "Eyk", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = false, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"toilet"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+
+local MainTab = Window:CreateTab("Main", 4483362458) -- Title, Image
+local Section = MainTab:CreateSection("Main stuff")
+
+local Button = MainTab:CreateButton({
+   Name = "Power shot (L)",
+   Callback = function()
+   -- Roblox LocalScript for launching multiple footballs with straight powerful shots
+-- Dynamically detects new footballs and handles player interaction
+
+-- Wait for all services to load
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local userInputService = game:GetService("UserInputService")
+local junkFolder = workspace:WaitForChild("Junk")
+
+-- Variables for activation and action
+local activated = false
+local launchTriggered = false
+local footballs = {} -- List of all football parts
+
+-- Settings for the speed of the shot
+local speed = 500 -- Powerful shot speed
+
+-- Function to get all footballs in the Junk folder
+local function getAllFootballs()
+    local newFootballList = {}
+    for _, obj in pairs(junkFolder:GetChildren()) do
+        if obj:IsA("Part") and obj.Name == "Football" then
+            table.insert(newFootballList, obj)
+        end
+    end
+    return newFootballList
+end
+
+-- Function to launch all footballs straight in the direction of the camera
+local function launchFootballs()
+    if #footballs == 0 then return end
+
+    -- Get the camera's forward direction, but remove the Y component to keep the direction level
+    local initialDirection = camera.CFrame.LookVector
+    initialDirection = Vector3.new(initialDirection.X, 0, initialDirection.Z) -- Remove vertical component
+
+    -- Apply the velocity to each football to launch them in the direction the camera is facing
+    for _, football in pairs(footballs) do
+        football.Velocity = initialDirection * speed
+    end
+end
+
+-- Function to remove football from list when it is destroyed or removed
+local function removeFootballFromList(football)
+    for i, v in ipairs(footballs) do
+        if v == football then
+            table.remove(footballs, i)
+            break
+        end
+    end
+end
+
+-- Key press handling
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Ignore if focused on UI
+
+    -- Toggle activation with "H"
+    if input.KeyCode == Enum.KeyCode.H then
+        activated = not activated
+        if activated then
+            print("Script activated. Press 'L' to launch the footballs.")
+            speed = 500 -- Set speed to 500 when activated (powerful shot)
+        else
+            print("Script deactivated.")
+            speed = 500 -- Speed remains at 500 while activated
+        end
+    end
+
+    -- Launch the footballs with "L" if activated
+    if activated and input.KeyCode == Enum.KeyCode.L then
+        -- Get the current list of footballs before launching
+        footballs = getAllFootballs()
+
+        if #footballs == 0 then
+            print("No footballs found in Junk folder!")
+            return
+        end
+
+        if launchTriggered then return end
+        launchTriggered = true
+
+        -- Launch the footballs
+        launchFootballs()
+
+        -- Wait a short time to prevent multiple launches
+        wait(1)
+        launchTriggered = false
+    end
+end)
+
+-- Event handler for when a football is touched
+local function onFootballTouched(football, otherPart)
+    -- You may want to add custom logic for when a football is touched
+    -- For now, we'll just print that the football was touched.
+    if otherPart.Parent:FindFirstChild("Humanoid") then
+        print("Football touched by player: " .. otherPart.Parent.Name)
+    end
+end
+
+-- Continuous check for new footballs in the Junk folder
+junkFolder.ChildAdded:Connect(function(child)
+    if child:IsA("Part") and child.Name == "Football" then
+        print("New football added to Junk folder!")
+        -- Add touch listener for the new football
+        child.Touched:Connect(function(otherPart)
+            onFootballTouched(child, otherPart)
+        end)
+    end
+end)
+
+-- Listen for when footballs are removed or destroyed
+junkFolder.ChildRemoved:Connect(function(child)
+    if child:IsA("Part") and child.Name == "Football" then
+        print("Football removed from Junk folder!")
+        removeFootballFromList(child) -- Remove it from the list
+    end
+end)
+
+-- Initial check for existing footballs
+footballs = getAllFootballs()
+for _, football in pairs(footballs) do
+    -- Add touch listeners for already existing footballs
+    football.Touched:Connect(function(otherPart)
+        onFootballTouched(football, otherPart)
+    end)
+end
+if #footballs > 0 then
+    print("Football(s) found in Junk folder!")
+else
+    print("No footballs in Junk folder yet.")
+end
+
+   end,
+})
+
+local Button = MainTab:CreateButton({
+   Name = "Finesse curve (J)",
+   Callback = function()
+   -- Roblox LocalScript for curving multiple footballs and dynamically detecting new footballs
+-- Also handles football breakage and player interaction (touching the ball)
+
+-- Wait for all services to load
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local userInputService = game:GetService("UserInputService")
+local junkFolder = workspace:WaitForChild("Junk")
+
+-- Variables for activation and action
+local activated = false
+local launchTriggered = false
+local footballs = {} -- List of all football parts
+
+-- Settings for the curve and speed
+local speed = 50 -- Default speed
+local curveAngle = math.rad(45) -- Convert 45 degrees to radians for math functions
+
+-- Function to get all footballs in the Junk folder
+local function getAllFootballs()
+    local newFootballList = {}
+    for _, obj in pairs(junkFolder:GetChildren()) do
+        if obj:IsA("Part") and obj.Name == "Football" then
+            table.insert(newFootballList, obj)
+        end
+    end
+    return newFootballList
+end
+
+-- Function to launch all footballs with curve
+local function launchFootballs()
+    if #footballs == 0 then return end
+
+    -- Get the camera's forward direction, but remove the Y component to keep the direction level
+    local initialDirection = camera.CFrame.LookVector
+    initialDirection = Vector3.new(initialDirection.X, 0, initialDirection.Z) -- Remove vertical component
+
+    -- Calculate curve by rotating the direction vector by 45 degrees on the Y axis
+    local curvedDirection = CFrame.fromAxisAngle(Vector3.new(0, 1, 0), curveAngle) * initialDirection
+
+    -- Apply the velocity to each football to launch them
+    for _, football in pairs(footballs) do
+        football.Velocity = curvedDirection * speed
+    end
+end
+
+-- Function to remove football from list when it is destroyed or removed
+local function removeFootballFromList(football)
+    for i, v in ipairs(footballs) do
+        if v == football then
+            table.remove(footballs, i)
+            break
+        end
+    end
+end
+
+-- Key press handling
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Ignore if focused on UI
+
+    -- Toggle activation with "H"
+    if input.KeyCode == Enum.KeyCode.H then
+        activated = not activated
+        if activated then
+            print("Script activated. Press 'J' to launch the footballs.")
+            speed = 200 -- Change speed to 200 when activated
+        else
+            print("Script deactivated.")
+            speed = 50 -- Reset speed to default when deactivated
+        end
+    end
+
+    -- Launch the footballs with "J" if activated
+    if activated and input.KeyCode == Enum.KeyCode.J then
+        -- Get the current list of footballs before launching
+        footballs = getAllFootballs()
+
+        if #footballs == 0 then
+            print("No footballs found in Junk folder!")
+            return
+        end
+
+        if launchTriggered then return end
+        launchTriggered = true
+
+        -- Launch the footballs
+        launchFootballs()
+
+        -- Wait a short time to prevent multiple launches
+        wait(1)
+        launchTriggered = false
+    end
+end)
+
+-- Event handler for when a football is touched
+local function onFootballTouched(football, otherPart)
+    -- You may want to add custom logic for when a football is touched
+    -- For now, we'll just print that the football was touched.
+    if otherPart.Parent:FindFirstChild("Humanoid") then
+        print("Football touched by player: " .. otherPart.Parent.Name)
+    end
+end
+
+-- Continuous check for new footballs in the Junk folder
+junkFolder.ChildAdded:Connect(function(child)
+    if child:IsA("Part") and child.Name == "Football" then
+        print("New football added to Junk folder!")
+        -- Add touch listener for the new football
+        child.Touched:Connect(function(otherPart)
+            onFootballTouched(child, otherPart)
+        end)
+    end
+end)
+
+-- Listen for when footballs are removed or destroyed
+junkFolder.ChildRemoved:Connect(function(child)
+    if child:IsA("Part") and child.Name == "Football" then
+        print("Football removed from Junk folder!")
+        removeFootballFromList(child) -- Remove it from the list
+    end
+end)
+
+-- Initial check for existing footballs
+footballs = getAllFootballs()
+for _, football in pairs(footballs) do
+    -- Add touch listeners for already existing footballs
+    football.Touched:Connect(function(otherPart)
+        onFootballTouched(football, otherPart)
+    end)
+end
+if #footballs > 0 then
+    print("Football(s) found in Junk folder!")
+else
+    print("No footballs in Junk folder yet.")
+end
+
+   end,
+})
+
+local Button = MainTab:CreateButton({
+   Name = "Trivela curve (P)",
+   Callback = function()
+   -- Roblox LocalScript for curving multiple footballs and dynamically detecting new footballs
+-- Also handles football breakage and player interaction (touching the ball)
+
+-- Wait for all services to load
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local userInputService = game:GetService("UserInputService")
+local junkFolder = workspace:WaitForChild("Junk")
+
+-- Variables for activation and action
+local activated = false
+local launchTriggered = false
+local footballs = {} -- List of all football parts
+
+-- Settings for the curve and speed
+local speed = 50 -- Default speed
+local curveAngle = math.rad(45) -- Convert 45 degrees to radians for math functions (curving left-to-right)
+
+-- Function to get all footballs in the Junk folder
+local function getAllFootballs()
+    local newFootballList = {}
+    for _, obj in pairs(junkFolder:GetChildren()) do
+        if obj:IsA("Part") and obj.Name == "Football" then
+            table.insert(newFootballList, obj)
+        end
+    end
+    return newFootballList
+end
+
+-- Function to launch all footballs with a left-to-right curve
+local function launchFootballs()
+    if #footballs == 0 then return end
+
+    -- Get the camera's forward direction, but remove the Y component to keep the direction level
+    local initialDirection = camera.CFrame.LookVector
+    initialDirection = Vector3.new(initialDirection.X, 0, initialDirection.Z) -- Remove vertical component
+
+    -- Calculate curve by rotating the direction vector by -45 degrees on the Y axis (left-to-right)
+    local curvedDirection = CFrame.fromAxisAngle(Vector3.new(0, -1, 0), curveAngle) * initialDirection
+
+    -- Apply the velocity to each football to launch them
+    for _, football in pairs(footballs) do
+        football.Velocity = curvedDirection * speed
+    end
+end
+
+-- Function to remove football from list when it is destroyed or removed
+local function removeFootballFromList(football)
+    for i, v in ipairs(footballs) do
+        if v == football then
+            table.remove(footballs, i)
+            break
+        end
+    end
+end
+
+-- Key press handling
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end -- Ignore if focused on UI
+
+    -- Toggle activation with "H"
+    if input.KeyCode == Enum.KeyCode.H then
+        activated = not activated
+        if activated then
+            print("Script activated. Press 'P' to launch the footballs.")
+            speed = 200 -- Change speed to 200 when activated
+        else
+            print("Script deactivated.")
+            speed = 50 -- Reset speed to default when deactivated
+        end
+    end
+
+    -- Launch the footballs with "P" if activated
+    if activated and input.KeyCode == Enum.KeyCode.P then
+        -- Get the current list of footballs before launching
+        footballs = getAllFootballs()
+
+        if #footballs == 0 then
+            print("No footballs found in Junk folder!")
+            return
+        end
+
+        if launchTriggered then return end
+        launchTriggered = true
+
+        -- Launch the footballs
+        launchFootballs()
+
+        -- Wait a short time to prevent multiple launches
+        wait(1)
+        launchTriggered = false
+    end
+end)
+
+-- Event handler for when a football is touched
+local function onFootballTouched(football, otherPart)
+    -- You may want to add custom logic for when a football is touched
+    -- For now, we'll just print that the football was touched.
+    if otherPart.Parent:FindFirstChild("Humanoid") then
+        print("Football touched by player: " .. otherPart.Parent.Name)
+    end
+end
+
+-- Continuous check for new footballs in the Junk folder
+junkFolder.ChildAdded:Connect(function(child)
+    if child:IsA("Part") and child.Name == "Football" then
+        print("New football added to Junk folder!")
+        -- Add touch listener for the new football
+        child.Touched:Connect(function(otherPart)
+            onFootballTouched(child, otherPart)
+        end)
+    end
+end)
+
+-- Listen for when footballs are removed or destroyed
+junkFolder.ChildRemoved:Connect(function(child)
+    if child:IsA("Part") and child.Name == "Football" then
+        print("Football removed from Junk folder!")
+        removeFootballFromList(child) -- Remove it from the list
+    end
+end)
+
+-- Initial check for existing footballs
+footballs = getAllFootballs()
+for _, football in pairs(footballs) do
+    -- Add touch listeners for already existing footballs
+    football.Touched:Connect(function(otherPart)
+        onFootballTouched(football, otherPart)
+    end)
+end
+if #footballs > 0 then
+    print("Football(s) found in Junk folder!")
+else
+    print("No footballs in Junk folder yet.")
+end
+
+   end,
+})
+
+local Button = MainTab:CreateButton({
+   Name = "Knuckleball (G)",
+   Callback = function()
+   local player = game.Players.LocalPlayer
+local userInput = game:GetService("UserInputService")
+local camera = workspace.CurrentCamera
+local junkFolder = workspace:WaitForChild("Junk")
+
+local speed = 1000
+local freezeTime = 0.3
+local football
+local scriptEnabled = false  -- Variable to track if the script is enabled
+
+-- Function to set the football reference if it appears or reappears in Junk
+local function checkForFootball()
+    football = junkFolder:FindFirstChild("Football")
+end
+
+-- Initial check in case Football already exists in Junk
+checkForFootball()
+
+-- Detect new parts added to Junk and look for Football
+junkFolder.ChildAdded:Connect(function(child)
+    if child.Name == "Football" then
+        football = child
+    end
+end)
+
+-- Function to launch the football
+local function launchFootball()
+    if football then
+        -- Freeze the ball in mid-air for 0.3 seconds
+        football.Anchored = true
+        wait(freezeTime)
+        
+        -- Unfreeze and apply velocity in the horizontal direction of the camera
+        football.Anchored = false
+        local launchDirection = camera.CFrame.LookVector
+        -- Zero out the Y component to keep the launch direction horizontal
+        local horizontalDirection = Vector3.new(launchDirection.X, 0, launchDirection.Z).Unit
+        football.Velocity = horizontalDirection * speed
+    else
+        warn("Football not found in Junk folder.")
+    end
+end
+
+-- Toggle function for enabling/disabling the script
+local function toggleScript()
+    scriptEnabled = not scriptEnabled
+    if scriptEnabled then
+        print("Football launch script enabled.")
+    else
+        print("Football launch script disabled.")
+    end
+end
+
+-- Event listener for key press
+userInput.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.H then
+            toggleScript()
+        elseif input.KeyCode == Enum.KeyCode.G and scriptEnabled then
+            launchFootball()
+        end
+    end
+end)
+
+   end,
+})
